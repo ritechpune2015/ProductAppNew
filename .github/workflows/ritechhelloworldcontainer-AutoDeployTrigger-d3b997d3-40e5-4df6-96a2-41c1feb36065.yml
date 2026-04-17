@@ -1,0 +1,49 @@
+name: Trigger auto deployment for ritechhelloworldcontainer
+
+# When this action will be executed
+on:
+  # Automatically trigger it when detected changes in repo
+  push:
+    branches: 
+      [ master ]
+    paths:
+    - '**'
+    - '.github/workflows/ritechhelloworldcontainer-AutoDeployTrigger-d3b997d3-40e5-4df6-96a2-41c1feb36065.yml'
+
+  # Allow manual trigger 
+  workflow_dispatch:      
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions: 
+      id-token: write #This is required for requesting the OIDC JWT Token
+      contents: read #Required when GH token is used to authenticate with private repo
+
+    steps:
+      - name: Checkout to the branch
+        uses: actions/checkout@v2
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.RITECHHELLOWORLDCONTAINER_AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.RITECHHELLOWORLDCONTAINER_AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.RITECHHELLOWORLDCONTAINER_AZURE_SUBSCRIPTION_ID }}
+
+      - name: Build and push container image to registry
+        uses: azure/container-apps-deploy-action@v2
+        with:
+          appSourcePath: ${{ github.workspace }}
+          _dockerfilePathKey_: _dockerfilePath_
+          _targetLabelKey_: _targetLabel_
+          registryUrl: 
+          registryUsername: ${{ secrets.RITECHHELLOWORLDCONTAINER_REGISTRY_USERNAME }}
+          registryPassword: ${{ secrets.RITECHHELLOWORLDCONTAINER_REGISTRY_PASSWORD }}
+          containerAppName: ritechhelloworldcontainer
+          resourceGroup: containerdemogrooup
+          imageToBuild: default/[parameters('containerAppName')]:${{ github.sha }}
+          _buildArgumentsKey_: |
+            _buildArgumentsValues_
+
+
